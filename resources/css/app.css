@@ -2,3 +2,8 @@
 
 @source '../views/**/*.blade.php';
 @source '../js/**/*.{vue,js,ts}';
+
+button:not(:disabled),
+[role="button"]:not(:disabled) {
+    cursor: pointer;
+}
