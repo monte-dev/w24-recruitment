@@ -21,7 +21,7 @@ readonly class TransactionData
             transactionId: self::nullableString($data, 'transaction_id'),
             accountNumber: self::nullableString($data, 'account_number'),
             transactionDate: self::nullableString($data, 'transaction_date'),
-            amount: self::normalizeAmount($data['amount'] ?? null),
+            amount: self::sanitizeRawAmount($data['amount'] ?? null),
             currency: self::nullableString($data, 'currency', toUpper: true),
         );
     }
@@ -40,6 +40,19 @@ readonly class TransactionData
         ];
     }
 
+    public function amountAsFloat(): ?float
+    {
+        if ($this->amount === null) {
+            return null;
+        }
+
+        $value = is_string($this->amount)
+            ? str_replace(',', '.', $this->amount)
+            : $this->amount;
+
+        return is_numeric($value) ? (float) $value : null;
+    }
+
     private static function nullableString(array $data, string $key, bool $toUpper = false): ?string
     {
         $value = $data[$key] ?? null;
@@ -53,7 +66,7 @@ readonly class TransactionData
         return $toUpper ? strtoupper($trimmed) : $trimmed;
     }
 
-    private static function normalizeAmount(mixed $amount): string|int|float|null
+    private static function sanitizeRawAmount(mixed $amount): string|int|float|null
     {
         if ($amount === null || $amount === '' || is_bool($amount) || is_array($amount)) {
             return null;
