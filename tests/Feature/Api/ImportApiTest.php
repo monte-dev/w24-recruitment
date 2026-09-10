@@ -15,20 +15,12 @@ class ImportApiTest extends TestCase
 
     public function test_it_uploads_valid_csv_file(): void
     {
-        $csv = <<<CSV
-            transaction_id,account_number,transaction_date,amount,currency
-            550e8400-e29b-41d4-a716-446655440000,PL12345678901234567890123456,2025-10-14,150000,PLN
-            550e8400-e29b-41d4-a716-446655440001,PL98765432109876543210987654,2025-10-13,20050,USD
-            CSV;
-
-        $file = UploadedFile::fake()->createWithContent('valid.csv', $csv);
-
         $response = $this->postJson('/api/imports', [
-            'file' => $file,
+            'file' => $this->sampleUploadedFile('valid_transactions.csv'),
         ]);
 
         $response->assertStatus(201)
-            ->assertJsonPath('data.file_name', 'valid.csv')
+            ->assertJsonPath('data.file_name', 'valid_transactions.csv')
             ->assertJsonPath('data.status', 'success')
             ->assertJsonPath('data.total_records', 2)
             ->assertJsonPath('data.successful_records', 2)
@@ -40,19 +32,8 @@ class ImportApiTest extends TestCase
 
     public function test_it_uploads_mixed_csv_file_resulting_in_partial_status(): void
     {
-        $csv = <<<CSV
-            transaction_id,account_number,transaction_date,amount,currency
-            550e8400-e29b-41d4-a716-446655440000,PL12345678901234567890123456,2025-10-14,150000,PLN
-            ERR-BAD-IBAN,INVALID_ACCOUNT_123,2025-10-14,50000,PLN
-            ERR-NEGATIVE-AMOUNT,PL98765432109876543210987654,2025-10-13,-200,USD
-            ERR-WRONG-CURRENCY,PL11223344556677889900112233,2025-10-12,1200,EURO
-            550e8400-e29b-41d4-a716-446655440001,PL98765432109876543210987654,2025-10-13,20050,USD
-            CSV;
-
-        $file = UploadedFile::fake()->createWithContent('mixed.csv', $csv);
-
         $response = $this->postJson('/api/imports', [
-            'file' => $file,
+            'file' => $this->sampleUploadedFile('mixed_transactions.csv'),
         ]);
 
         $response->assertStatus(201)
@@ -67,51 +48,24 @@ class ImportApiTest extends TestCase
 
     public function test_it_uploads_json_file(): void
     {
-        $json = json_encode([
-            [
-                'transaction_id' => 'JSON-1',
-                'account_number' => 'PL12345678901234567890123456',
-                'transaction_date' => '2026-06-01',
-                'amount' => 500,
-                'currency' => 'PLN',
-            ],
-        ]);
-
-        $file = UploadedFile::fake()->createWithContent('transactions.json', $json);
-
         $response = $this->postJson('/api/imports', [
-            'file' => $file,
+            'file' => $this->sampleUploadedFile('valid_transactions.json'),
         ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('data.status', 'success')
-            ->assertJsonPath('data.successful_records', 1);
+            ->assertJsonPath('data.successful_records', 2);
     }
 
     public function test_it_uploads_xml_file(): void
     {
-        $xml = <<<XML
-            <?xml version="1.0" encoding="UTF-8"?>
-            <transactions>
-                <transaction>
-                    <transaction_id>XML-1</transaction_id>
-                    <account_number>PL12345678901234567890123456</account_number>
-                    <transaction_date>2026-06-01</transaction_date>
-                    <amount>1200.50</amount>
-                    <currency>EUR</currency>
-                </transaction>
-            </transactions>
-            XML;
-
-        $file = UploadedFile::fake()->createWithContent('transactions.xml', $xml);
-
         $response = $this->postJson('/api/imports', [
-            'file' => $file,
+            'file' => $this->sampleUploadedFile('valid_transactions.xml'),
         ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('data.status', 'success')
-            ->assertJsonPath('data.successful_records', 1);
+            ->assertJsonPath('data.successful_records', 2);
     }
 
     public function test_it_rejects_unsupported_file_format(): void
