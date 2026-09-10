@@ -2,9 +2,7 @@
 
 namespace App\Exceptions;
 
-use Exception;
-
-class UnsupportedFileFormatException extends Exception
+class UnsupportedFileFormatException extends FileImportException
 {
     public function __construct(string $extension)
     {
